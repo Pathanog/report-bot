@@ -1,0 +1,6 @@
+{
+"guildId": "YOUR_SERVER_ID",
+"categoryId": "TICKET_CATEGORY_ID",
+"modRoleId": "MOD_ROLE_ID",
+"logChannelId": "LOG_CHANNEL_ID"
+}
