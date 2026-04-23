@@ -81,7 +81,7 @@ if (!message.guild) {
 
   activeTickets.set(message.author.id, channel.id);
 
-  await channel.send(`📩 New ticket from <@${message.author.id}>`);
+  await channel.send(message.author.tag + ": " + message.content);
   await channel.send(`**Message:** ${message.content}`);
 
   await message.reply("✅ Your message has been sent to support!");
