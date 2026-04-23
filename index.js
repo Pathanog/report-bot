@@ -57,7 +57,7 @@ if (!message.guild) {
     const channel = guild.channels.cache.get(channelId);
 
     if (channel) {
-      channel.send(`📩 **${message.author.tag}:** ${message.content}`);
+      channel.send(message.author.tag + ": " + message.content);
       return;
     }
   }
