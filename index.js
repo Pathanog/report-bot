@@ -9,14 +9,9 @@ PermissionsBitField
 
 const config = require("./config.json");
 
-// 🔥 Error logging (VERY IMPORTANT)
-process.on("unhandledRejection", (err) => {
-console.error("UNHANDLED REJECTION:", err);
-});
-
-process.on("uncaughtException", (err) => {
-console.error("UNCAUGHT EXCEPTION:", err);
-});
+// Error handling
+process.on("unhandledRejection", console.error);
+process.on("uncaughtException", console.error);
 
 const client = new Client({
 intents: [
@@ -28,30 +23,30 @@ GatewayIntentBits.MessageContent
 partials: [Partials.Channel]
 });
 
-const activeTickets = new Map(); // userId -> channelId
+const activeTickets = new Map();
 
-client.once("ready", () => {
-console.log(`✅ Logged in as ${client.user.tag}`);
+client.once("ready", function () {
+console.log("Bot is online!");
 });
 
-client.on("messageCreate", async (message) => {
+client.on("messageCreate", async function (message) {
 try {
 if (message.author.bot) return;
 
 ```
 // =========================
-// 📩 DM → CREATE / SEND TICKET
+// DM → CREATE / SEND TICKET
 // =========================
 if (!message.guild) {
   const guild = await client.guilds.fetch(config.guildId);
   const category = guild.channels.cache.get(config.categoryId);
 
   if (!category) {
-    console.error("❌ Category not found");
+    console.log("Category not found");
     return;
   }
 
-  // If ticket already exists
+  // If ticket exists
   if (activeTickets.has(message.author.id)) {
     const channelId = activeTickets.get(message.author.id);
     const channel = guild.channels.cache.get(channelId);
@@ -62,11 +57,11 @@ if (!message.guild) {
     }
   }
 
-  // Create new ticket channel
+  // Create ticket channel
   const channel = await guild.channels.create({
-    name: `ticket-${message.author.username}`,
+    name: "ticket-" + message.author.username,
     type: 0,
-    parent: category.id,
+    parent: config.categoryId,
     permissionOverwrites: [
       {
         id: guild.roles.everyone,
@@ -81,47 +76,48 @@ if (!message.guild) {
 
   activeTickets.set(message.author.id, channel.id);
 
-  await channel.send(message.author.tag + ": " + message.content);
-  await channel.send(`**Message:** ${message.content}`);
+  await channel.send("New ticket from <@" + message.author.id + ">");
+  await channel.send("Message: " + message.content);
 
-  await message.reply("✅ Your message has been sent to support!");
+  await message.reply("Your message has been sent to support!");
 
   return;
 }
 
 // =========================
-// 💬 STAFF → USER DM
+// STAFF → USER DM
 // =========================
 if (message.channel.parentId === config.categoryId) {
-  const entry = [...activeTickets.entries()].find(
-    ([_, chId]) => chId === message.channel.id
-  );
+  let userId = null;
 
-  if (!entry) return;
+  for (const entry of activeTickets.entries()) {
+    if (entry[1] === message.channel.id) {
+      userId = entry[0];
+    }
+  }
 
-  const userId = entry[0];
+  if (!userId) return;
+
   const user = await client.users.fetch(userId);
-
   if (!user) return;
 
-  // Close ticket
   if (message.content === "!close") {
-    await message.channel.send("🔒 Ticket closed.");
+    await message.channel.send("Ticket closed.");
     activeTickets.delete(userId);
 
-    setTimeout(() => {
-      message.channel.delete().catch(() => {});
+    setTimeout(function () {
+      message.channel.delete().catch(function () {});
     }, 3000);
 
     return;
   }
 
-  await user.send(`💬 **Staff:** ${message.content}`);
+  await user.send("Staff: " + message.content);
 }
 ```
 
 } catch (err) {
-console.error("❌ ERROR:", err);
+console.error("ERROR:", err);
 }
 });
 
